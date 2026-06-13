@@ -1,0 +1,17 @@
+services:
+  health-log:
+    build: .
+    container_name: health-log
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_PATH=/data/health.db
+      - TZ=America/Los_Angeles
+      - VAPID_PUBLIC=${VAPID_PUBLIC}
+      - VAPID_PRIVATE=${VAPID_PRIVATE}
+      - VAPID_SUBJECT=${VAPID_SUBJECT}
+      - PUBLIC_URL=${PUBLIC_URL}
+    volumes:
+      - ./data:/data

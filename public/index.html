@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2C7A6B" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<title>Daily Health Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="auth-gate" class="gate hidden">
+    <div class="gate-card">
+      <h1>Daily Health Log</h1>
+      <p>This link is missing your access code. Use the link your reviewer sent you.</p>
+    </div>
+  </div>
+
+  <header id="header" class="hidden">
+    <div class="eyebrow">Daily Health Log</div>
+    <div class="date" id="today-date"></div>
+    <div class="hello" id="hello"></div>
+  </header>
+
+  <main id="main" class="hidden">
+    <section class="card weight-card">
+      <div class="card-label">Today's weight</div>
+      <div id="weight-view"></div>
+    </section>
+
+    <button class="big-btn" id="add-reading">+ Add a blood sugar reading</button>
+
+    <div id="readings-list"></div>
+
+    <section class="card subtle">
+      <div class="card-label">Reminders</div>
+      <button id="enable-push" class="link-btn">Turn on notifications</button>
+      <div id="push-status" class="hint"></div>
+    </section>
+  </main>
+
+  <!-- Weight modal -->
+  <div id="weight-modal" class="modal hidden" data-close>
+    <div class="sheet" data-stop>
+      <div class="sheet-head">
+        <h2>Today's weight</h2>
+        <button class="x" data-close>✕</button>
+      </div>
+      <label class="field">
+        <div class="field-label">Weight (lb)</div>
+        <input id="weight-input" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 175.0" />
+      </label>
+      <button class="big-btn" id="weight-save">Save weight</button>
+    </div>
+  </div>
+
+  <!-- Reading modal -->
+  <div id="reading-modal" class="modal hidden" data-close>
+    <div class="sheet" data-stop>
+      <div class="sheet-head">
+        <h2 id="reading-title">New reading</h2>
+        <button class="x" data-close>✕</button>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Which meal?</div>
+        <div class="chips" id="slot-chips">
+          <button class="chip" data-slot="breakfast">Breakfast</button>
+          <button class="chip" data-slot="lunch">Lunch</button>
+          <button class="chip" data-slot="dinner">Dinner</button>
+          <button class="chip" data-slot="bedtime">Bedtime</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="field flex">
+          <div class="field-label">Date</div>
+          <input id="reading-date" type="date" />
+        </label>
+        <label class="field flex">
+          <div class="field-label">Time</div>
+          <input id="reading-time" type="time" />
+        </label>
+      </div>
+
+      <label class="field">
+        <div class="field-label">Blood sugar (mg/dL)</div>
+        <input id="reading-glucose" type="number" inputmode="numeric" placeholder="e.g. 124" class="big-input" />
+      </label>
+
+      <label class="field" id="insulin-field">
+        <div class="field-label">Insulin taken (units)</div>
+        <input id="reading-insulin" type="number" inputmode="decimal" step="0.5" placeholder="Leave blank if none" />
+      </label>
+
+      <label class="field" id="food-field">
+        <div class="field-label">What did you eat?</div>
+        <textarea id="reading-food" rows="2" placeholder="Optional — e.g. chicken, rice, salad"></textarea>
+      </label>
+
+      <div id="reading-error" class="error hidden"></div>
+      <button class="big-btn" id="reading-save">Save reading</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
