@@ -37,15 +37,15 @@ Self-hosted PWA for daily diabetic / post-transplant logging. Push notifications
 ### 1. Get the code on the NAS
 
 ```bash
-mkdir -p /volume1/docker/health-log
-cd /volume1/docker/health-log
+mkdir -p /Volume1/docker/health-log
+cd /Volume1/docker/health-log
 # copy this entire directory in (SMB / SSH / git, whatever you prefer)
 ```
 
 ### 2. Generate VAPID keys (one time)
 
 ```bash
-cd /volume1/docker/health-log
+cd /Volume1/docker/health-log
 docker run --rm -v "$PWD:/app" -w /app/server node:20-alpine sh -c \
   "npm install --omit=dev web-push >/dev/null 2>&1 && node ../scripts/generate-keys.js"
 ```
@@ -131,7 +131,7 @@ Open the reviewer view → **Sliding scale** tab. Add the prescribed rows (e.g. 
 The entire database is one file: `./data/health.db`. Snapshot it nightly:
 
 ```bash
-cd /volume1/docker/health-log
+cd /Volume1/docker/health-log
 sqlite3 ./data/health.db ".backup './data/health-$(date +%Y%m%d).db'"
 ```
 
