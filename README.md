@@ -94,11 +94,11 @@ Confirm `https://health.yourdomain.com` loads and shows the auth gate.
 
 ```bash
 # Patient (only one allowed)
-docker compose exec health-log node ../scripts/add-user.js patient "Dad" "dad@email.com"
+docker compose exec health-log node ../scripts/add-user.js patient "Dad" "lawin6969@gmail.com"
 
 # Reviewers (you + one more)
-docker compose exec health-log node ../scripts/add-user.js reviewer "Adam" "adam@email.com"
-docker compose exec health-log node ../scripts/add-user.js reviewer "Mom" "mom@email.com"
+docker compose exec health-log node ../scripts/add-user.js reviewer "Adam" "adamj.aguila@gmail.com"
+docker compose exec health-log node ../scripts/add-user.js reviewer "Mike" "mikeaone@gmail.com"
 
 # List anytime
 docker compose exec health-log node ../scripts/add-user.js list
