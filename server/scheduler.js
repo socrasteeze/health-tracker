@@ -9,6 +9,14 @@ const todayPT = () => {
   return fmt.format(new Date()); // YYYY-MM-DD
 };
 
+// Subtract whole days from a YYYY-MM-DD string via UTC math (no TZ drift).
+const dateMinus = (isoDate, days) => {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - days);
+  return dt.toISOString().slice(0, 10);
+};
+
 const SLOTS = {
   weight:    { hour: 7,  min: 0,  title: "Morning weigh-in", body: "Tap to log today's weight." },
   breakfast: { hour: 8,  min: 0,  title: "Breakfast check", body: "Log your blood sugar, insulin, and what you're eating." },
@@ -97,4 +105,4 @@ export const startScheduler = () => {
 };
 
 // for manual triggers (debug / health endpoint)
-export const _internals = { sendPrompt, checkMissed, todayPT, SLOTS };
+export const _internals = { sendPrompt, checkMissed, todayPT, dateMinus, SLOTS };

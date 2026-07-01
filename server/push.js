@@ -26,7 +26,7 @@ export const pushToUser = async (userId, payload) => {
       sent++;
     } catch (e) {
       failed++;
-      // 410 = subscription gone, clean it up
+      // 404/410 = subscription gone, clean it up
       if (e.statusCode === 404 || e.statusCode === 410) {
         db.prepare("DELETE FROM push_subs WHERE id = ?").run(s.id);
       } else {

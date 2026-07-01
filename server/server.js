@@ -57,15 +57,18 @@ app.post("/api/reading", auth(["patient"]), (req, res) => {
   }
 
   const g = Number(glucose);
-  const ins = insulin_units === "" || insulin_units == null ? null : Number(insulin_units);
-  const expected = expectedInsulin(req.user.id, g);
+  const isBedtime = slot === "bedtime";
+  // Invariant #4: bedtime carries glucose only — no insulin, food, or sliding-scale.
+  const ins = isBedtime || insulin_units === "" || insulin_units == null ? null : Number(insulin_units);
+  const foodVal = isBedtime ? null : (food || null);
+  const expected = isBedtime ? null : expectedInsulin(req.user.id, g);
   // flag if expected exists and patient deviated (any non-zero diff, rounded to 0.5)
   const flag = expected != null && ins != null && Math.abs(ins - expected) >= 0.5 ? 1 : 0;
 
   const info = db.prepare(
     "INSERT INTO readings(user_id,date,slot,time,glucose,insulin_units,food,scale_expected,scale_flag) " +
     "VALUES(?,?,?,?,?,?,?,?,?)"
-  ).run(req.user.id, date, slot, time, g, ins, food || null, expected, flag);
+  ).run(req.user.id, date, slot, time, g, ins, foodVal, expected, flag);
 
   // clear any prior missed marker for this slot today
   db.prepare("DELETE FROM missed WHERE user_id = ? AND date = ? AND slot = ?")
@@ -125,9 +128,7 @@ app.get("/api/reviewer/summary", auth(["reviewer"]), (req, res) => {
   const patient = getPatient();
   if (!patient) return res.json({ patient: null });
   const days = Number(req.query.days) || 7;
-  const since = new Date();
-  since.setDate(since.getDate() - (days - 1));
-  const cutoff = since.toISOString().slice(0, 10);
+  const cutoff = _internals.dateMinus(_internals.todayPT(), days - 1);
 
   const readings = db.prepare(
     "SELECT date,slot,time,glucose,insulin_units,food,scale_expected,scale_flag FROM readings " +
@@ -162,9 +163,7 @@ app.get("/api/reviewer/export.csv", auth(["reviewer"]), (req, res) => {
   const patient = getPatient();
   if (!patient) return res.status(404).send("no patient");
   const days = Number(req.query.days) || 30;
-  const since = new Date();
-  since.setDate(since.getDate() - (days - 1));
-  const cutoff = since.toISOString().slice(0, 10);
+  const cutoff = _internals.dateMinus(_internals.todayPT(), days - 1);
 
   const readings = db.prepare(
     "SELECT date,slot,time,glucose,insulin_units,food,scale_expected,scale_flag FROM readings " +
@@ -183,7 +182,14 @@ app.get("/api/reviewer/export.csv", auth(["reviewer"]), (req, res) => {
     rows.push([r.date, r.slot, r.time, r.glucose, r.insulin_units ?? "", r.scale_expected ?? "",
                r.scale_flag ? "YES" : "", (r.food || "").replace(/"/g, "'"), wt]);
   }
-  const csv = rows.map((row) => row.map((c) => `"${c}"`).join(",")).join("\n");
+  // Neutralize spreadsheet formula injection: a cell beginning with = + - @
+  // is prefixed with ' so Excel/Sheets treats it as text, not a formula.
+  const csvCell = (c) => {
+    let s = String(c);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", `attachment; filename="health-log-${cutoff}.csv"`);
   res.send(csv);
