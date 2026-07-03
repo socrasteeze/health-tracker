@@ -25,8 +25,8 @@ Working file. Check items as completed. Each task is a discrete step CC can exec
 
 ## Phase 2 — NAS deploy
 
-- [ ] Repo copied to NAS: `/volume1/docker/health-log/`
-- [ ] `cd /volume1/docker/health-log`
+- [ ] Code deployed to NAS via `sh nas-update.sh` (see [NAS_DEPLOY.md](NAS_DEPLOY.md)) — lands at `/Volume1/health-log/`
+- [ ] `cd /Volume1/health-log`
 - [ ] **Generate VAPID keys:**
   ```bash
   docker run --rm -v "$PWD:/app" -w /app/server node:20-alpine sh -c \
@@ -37,7 +37,7 @@ Working file. Check items as completed. Each task is a discrete step CC can exec
   - [ ] `VAPID_PRIVATE`
   - [ ] `VAPID_SUBJECT=mailto:<your email>`
   - [ ] `PUBLIC_URL=https://health.<domain>`
-- [ ] **Build + start:**
+- [ ] **Build + start** (subsequent updates: `sh nas-update.sh` or `nas-refresh.bat` from the desktop does this automatically):
   ```bash
   docker compose up -d --build
   ```
@@ -168,7 +168,7 @@ Working file. Check items as completed. Each task is a discrete step CC can exec
 |---|---|
 | See container logs | `docker compose logs -f health-log` |
 | Restart | `docker compose restart health-log` |
-| Pull updates + rebuild | `docker compose up -d --build` |
+| Pull updates + rebuild | `nas-refresh.bat` (from desktop) or `sh nas-update.sh` (on NAS) — see [NAS_DEPLOY.md](NAS_DEPLOY.md) |
 | List users | `docker compose exec health-log node ../scripts/add-user.js list` |
 | Add reviewer | `docker compose exec health-log node ../scripts/add-user.js reviewer "Name" "email"` |
 | Delete user | `docker compose exec health-log node ../scripts/add-user.js delete <id>` |
