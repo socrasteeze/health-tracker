@@ -29,16 +29,21 @@
   <main id="main" class="hidden">
     <section class="card weight-card">
       <div class="card-label">Today's weight</div>
+      <p class="card-hint">Step on the scale once each morning.</p>
       <div id="weight-view"></div>
     </section>
 
-    <button class="big-btn" id="add-reading">+ Add a blood sugar reading</button>
+    <section class="cta-block">
+      <button class="big-btn" id="add-reading">+ Log blood sugar</button>
+      <p class="cta-hint">Tap after each check — breakfast, lunch, dinner, or bedtime.</p>
+    </section>
 
     <div id="readings-list"></div>
 
     <section class="card subtle">
       <div class="card-label">Reminders</div>
-      <button id="enable-push" class="link-btn">Turn on notifications</button>
+      <p class="card-hint">Optional. A gentle tap at check-in times.</p>
+      <button id="enable-push" class="big-btn quiet">Turn on notifications</button>
       <div id="push-status" class="hint"></div>
     </section>
   </main>
@@ -48,62 +53,127 @@
     <div class="sheet" data-stop>
       <div class="sheet-head">
         <h2>Today's weight</h2>
-        <button class="x" data-close>✕</button>
+        <button class="x" data-close aria-label="Close">✕</button>
       </div>
+      <p class="step-hint">Enter the number from your scale, in pounds.</p>
       <label class="field">
         <div class="field-label">Weight (lb)</div>
-        <input id="weight-input" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 175.0" />
+        <input id="weight-input" type="number" inputmode="decimal" step="0.1" min="50" max="500" placeholder="175" class="big-input" autocomplete="off" />
       </label>
+      <div id="weight-preview" class="preview-box hidden"></div>
+      <div id="weight-error" class="error hidden"></div>
       <button class="big-btn" id="weight-save">Save weight</button>
     </div>
   </div>
 
-  <!-- Reading modal -->
+  <!-- Reading wizard modal -->
   <div id="reading-modal" class="modal hidden" data-close>
-    <div class="sheet" data-stop>
+    <div class="sheet sheet-wizard" data-stop>
       <div class="sheet-head">
-        <h2 id="reading-title">New reading</h2>
-        <button class="x" data-close>✕</button>
+        <h2 id="reading-title">Log reading</h2>
+        <button class="x" data-close aria-label="Close">✕</button>
       </div>
 
-      <div class="field">
-        <div class="field-label">Which meal?</div>
-        <div class="chips" id="slot-chips">
-          <button class="chip" data-slot="breakfast">Breakfast</button>
-          <button class="chip" data-slot="lunch">Lunch</button>
-          <button class="chip" data-slot="dinner">Dinner</button>
-          <button class="chip" data-slot="bedtime">Bedtime</button>
+      <div class="wizard-progress hidden" id="wizard-progress" aria-hidden="true"></div>
+
+      <!-- Step 1: meal -->
+      <div class="wizard-step" data-step="slot">
+        <p class="step-lead">Which check-in is this?</p>
+        <p class="step-hint">Pick the meal that matches right now.</p>
+        <div class="chips chips-lg" id="slot-chips">
+          <button type="button" class="chip" data-slot="breakfast">Breakfast</button>
+          <button type="button" class="chip" data-slot="lunch">Lunch</button>
+          <button type="button" class="chip" data-slot="dinner">Dinner</button>
+          <button type="button" class="chip" data-slot="bedtime">Bedtime</button>
         </div>
       </div>
 
-      <div class="row">
-        <label class="field flex">
-          <div class="field-label">Date</div>
-          <input id="reading-date" type="date" />
+      <!-- Step 2: glucose -->
+      <div class="wizard-step hidden" data-step="glucose">
+        <p class="step-lead">Blood sugar reading</p>
+        <p class="step-hint">Type the number from your meter. No decimals.</p>
+        <label class="field">
+          <div class="field-label">mg/dL</div>
+          <input id="reading-glucose" type="number" inputmode="numeric" pattern="[0-9]*" min="20" max="600" placeholder="124" class="big-input" autocomplete="off" />
         </label>
-        <label class="field flex">
-          <div class="field-label">Time</div>
-          <input id="reading-time" type="time" />
-        </label>
+        <div id="glucose-preview" class="preview-box hidden"></div>
+        <div id="glucose-error" class="error hidden"></div>
+        <div id="glucose-warn" class="warn-box hidden">
+          <p id="glucose-warn-text"></p>
+          <div class="warn-actions">
+            <button type="button" class="big-btn quiet" id="glucose-fix">Fix number</button>
+            <button type="button" class="big-btn" id="glucose-confirm">Yes, that's right</button>
+          </div>
+        </div>
+        <button type="button" class="big-btn" id="glucose-next">Continue</button>
       </div>
 
-      <label class="field">
-        <div class="field-label">Blood sugar (mg/dL)</div>
-        <input id="reading-glucose" type="number" inputmode="numeric" placeholder="e.g. 124" class="big-input" />
-      </label>
+      <!-- Step 3: insulin (skipped for bedtime) -->
+      <div class="wizard-step hidden" data-step="insulin">
+        <p class="step-lead">Insulin you took</p>
+        <p class="step-hint">Tap the units you injected. Tap None if you skipped insulin.</p>
+        <div class="unit-grid" id="insulin-grid">
+          <button type="button" class="unit-btn" data-units="">None</button>
+          <button type="button" class="unit-btn" data-units="0.5">0.5</button>
+          <button type="button" class="unit-btn" data-units="1">1</button>
+          <button type="button" class="unit-btn" data-units="1.5">1.5</button>
+          <button type="button" class="unit-btn" data-units="2">2</button>
+          <button type="button" class="unit-btn" data-units="2.5">2.5</button>
+          <button type="button" class="unit-btn" data-units="3">3</button>
+          <button type="button" class="unit-btn" data-units="4">4</button>
+          <button type="button" class="unit-btn" data-units="5">5</button>
+          <button type="button" class="unit-btn" data-units="6">6</button>
+          <button type="button" class="unit-btn" data-units="8">8</button>
+          <button type="button" class="unit-btn" data-units="10">10</button>
+          <button type="button" class="unit-btn unit-btn-wide" data-units="other">Other amount…</button>
+        </div>
+        <label class="field hidden" id="insulin-custom-field">
+          <div class="field-label">Other units</div>
+          <input id="reading-insulin-custom" type="number" inputmode="decimal" step="0.5" min="0" max="30" placeholder="e.g. 3.5" class="big-input" autocomplete="off" />
+        </label>
+        <button type="button" class="big-btn" id="insulin-next">Continue</button>
+      </div>
 
-      <label class="field" id="insulin-field">
-        <div class="field-label">Insulin taken (units)</div>
-        <input id="reading-insulin" type="number" inputmode="decimal" step="0.5" placeholder="Leave blank if none" />
-      </label>
+      <!-- Step 4: food (skipped for bedtime) -->
+      <div class="wizard-step hidden" data-step="food">
+        <p class="step-lead">What did you eat?</p>
+        <p class="step-hint">A few words is enough. Or skip if you haven't eaten yet.</p>
+        <label class="field">
+          <div class="field-label">Meal notes</div>
+          <textarea id="reading-food" rows="3" placeholder="e.g. eggs and toast"></textarea>
+        </label>
+        <div class="btn-row">
+          <button type="button" class="big-btn quiet" id="food-skip">Skip</button>
+          <button type="button" class="big-btn" id="food-next">Continue</button>
+        </div>
+      </div>
 
-      <label class="field" id="food-field">
-        <div class="field-label">What did you eat?</div>
-        <textarea id="reading-food" rows="2" placeholder="Optional — e.g. chicken, rice, salad"></textarea>
-      </label>
+      <!-- Step 5: confirm -->
+      <div class="wizard-step hidden" data-step="confirm">
+        <p class="step-lead">Looks good?</p>
+        <p class="step-hint">Check everything once, then save.</p>
+        <div id="confirm-summary" class="confirm-summary"></div>
+        <details class="time-adjust">
+          <summary>Change date or time</summary>
+          <div class="row">
+            <label class="field flex">
+              <div class="field-label">Date</div>
+              <input id="reading-date" type="date" />
+            </label>
+            <label class="field flex">
+              <div class="field-label">Time</div>
+              <input id="reading-time" type="time" />
+            </label>
+          </div>
+        </details>
+        <div id="reading-error" class="error hidden"></div>
+        <div class="btn-row">
+          <button type="button" class="big-btn quiet" id="reading-back">Go back</button>
+          <button type="button" class="big-btn" id="reading-save">Save reading</button>
+        </div>
+      </div>
 
-      <div id="reading-error" class="error hidden"></div>
-      <button class="big-btn" id="reading-save">Save reading</button>
+      <button type="button" class="wizard-back link-btn hidden" id="wizard-back">← Back</button>
     </div>
   </div>
 
