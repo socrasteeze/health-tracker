@@ -4,7 +4,7 @@ services:
     container_name: health-log
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${HOST_PORT:-3000}:3000"
     environment:
       - PORT=3000
       - DB_PATH=/data/health.db

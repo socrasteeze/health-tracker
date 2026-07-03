@@ -19,7 +19,7 @@ rebuilding.
 | `REPO` | `socrasteeze/health-tracker` | GitHub `owner/repo` |
 | `BRANCH` | `main` | branch to deploy |
 | `APP_DIR` | `/Volume1/health-log` | where the code lands on the NAS |
-| `PORT` | `3000` | host + container port |
+| `DEFAULT_PORT` | `3000` | host port tried first; auto-rotates up if taken (see below) |
 | `TOKEN_FILE` | `$HOME/.cull-token` | shared GitHub PAT, reused across apps |
 | Persistent, never overwritten | `.env`, `data/` | VAPID keys + the patient's SQLite DB |
 
@@ -39,6 +39,24 @@ excludes both explicitly (and preserves them in the no-`rsync` fallback
 path too). If you ever copy this script to a different app, check whether
 that app has an equivalent "lives on the NAS, not in git" directory before
 reusing it as-is.
+
+## Port auto-rotation
+
+`docker-compose.yml`'s port mapping is `"${HOST_PORT:-3000}:3000"` — the
+container always listens on `3000` internally, but the *published* host port
+is a variable. `nas-update.sh` tries `3000` first; if `docker compose up`
+fails with a port-already-allocated error (something else on the NAS already
+bound it), it retries on `3001`, `3002`, ... up to 10 times before giving up.
+The port it actually lands on is written to `/Volume1/health-log/.host-port`
+and printed at the end of the run.
+
+**This only protects against the container failing to start — it does not
+know about your Cloudflare Tunnel config.** If rotation ever actually
+triggers, the script prints a loud warning, but the tunnel's ingress rule
+(`service: http://<NAS-IP>:3000`) will still point at the old port and the
+app will be unreachable from `https://health.<domain>` until you update it
+to match. Treat any rotation as a signal to go find out what's squatting on
+3000, not just a solved problem.
 
 ## One-time setup
 
@@ -92,3 +110,30 @@ Cloudflare Tunnel, user creation).
 | `.env` got reset to placeholder values | Confirm `nas-update.sh`'s rsync line still has `--exclude=.env` |
 | Container starts but `data/health.db` is empty on a re-deploy | Confirm `--exclude=data` is present — should never trigger, but this is the failure mode if it's ever removed |
 | `nas-update.sh` dies with a syntax error mid-run | The self-overwrite re-exec guard at the top is missing or was edited out |
+| Deployed on a port other than 3000 | Check `/Volume1/health-log/.host-port`, then update the Cloudflare Tunnel ingress rule to match |
+
+## Next steps
+
+This pipeline itself is done and pushed, but nothing has actually run on the
+NAS yet — none of this is exercised until the first live deploy. In order:
+
+- [ ] **Create the GitHub PAT and drop it on the NAS**, if `~/.cull-token`
+      doesn't already exist there from another app: GitHub → Settings →
+      Developer settings → Personal access tokens → classic token, `repo`
+      scope → `echo "ghp_xxx" > ~/.cull-token && chmod 600 ~/.cull-token` on
+      the NAS. Without this, `nas-update.sh` exits immediately with "Token
+      file not found."
+- [ ] **Set up SSH key auth** from the Windows desktop to
+      `lucyford@EAGLE-424` (or confirm it's already in place from the cull
+      setup) so `nas-refresh.bat` doesn't stop to prompt for a password.
+- [ ] **Run `sh nas-update.sh` directly on the NAS once**, not through the
+      `.bat`, so a first-run path/permission problem surfaces with output
+      you can read immediately instead of over SSH.
+- [ ] **Seed real `.env` on the NAS** with actual VAPID keys (`node
+      scripts/generate-keys.js`) and the real `PUBLIC_URL` — the script only
+      seeds the placeholder `.env.example` if `.env` is missing.
+- [ ] **Confirm `/Volume1/health-log/.host-port` reads `3000`** after the
+      first successful run, i.e. nothing else on the NAS is squatting on it.
+- [ ] Then resume [DEPLOY.md](DEPLOY.md) from **Phase 3** (Cloudflare
+      Tunnel) onward — sliding scale intake, tunnel routing, user creation,
+      onboarding are all still manual and unaffected by this change.
